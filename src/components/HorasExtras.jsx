@@ -8,13 +8,23 @@ function HorasExtras() {
   const [date, setDate] = useState('');
   const [hours, setHours] = useState('');
 
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   // Cargar las horas extras desde el servidor
   useEffect(() => {
-    fetch('http://localhost:5000/horasextras')
-      .then((response) => response.json())
-      .then((data) => setRecords(data))
-      .catch((error) => console.error('Error al obtener horas extras:', error));
-  }, []);
+    const fetchRecords = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/horasextras`);
+        if (!response.ok) throw new Error('Error al obtener horas extras');
+        
+        const data = await response.json();
+        setRecords(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchRecords();
+  }, [apiUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,23 +33,29 @@ function HorasExtras() {
     try {
       if (editIndex !== null) {
         // Editar hora extra
-        const updatedRecord = await fetch(`http://localhost:5000/horasextras/${records[editIndex]._id}`, {
+        const response = await fetch(`${apiUrl}/horasextras/${records[editIndex]._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
         });
-        const updatedData = await updatedRecord.json();
+        
+        if (!response.ok) throw new Error('Error al actualizar la hora extra');
+        
+        const updatedData = await response.json();
         const updatedRecords = [...records];
         updatedRecords[editIndex] = updatedData;
         setRecords(updatedRecords);
         setEditIndex(null);
       } else {
         // Añadir nueva hora extra
-        const response = await fetch('http://localhost:5000/horasextras', {
+        const response = await fetch(`${apiUrl}/horasextras`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newRecord),
         });
+        
+        if (!response.ok) throw new Error('Error al añadir la hora extra');
+        
         const data = await response.json();
         setRecords([...records, data]);  // Añadir nuevo registro al estado
       }
@@ -49,7 +65,7 @@ function HorasExtras() {
       setHours('');
       setShowForm(false);
     } catch (error) {
-      console.error('Error al guardar la hora extra:', error);
+      console.error(error);
     }
   };
 
@@ -65,13 +81,16 @@ function HorasExtras() {
   const handleDelete = async (index) => {
     const recordId = records[index]._id;
     try {
-      await fetch(`http://localhost:5000/horasextras/${recordId}`, {
+      const response = await fetch(`${apiUrl}/horasextras/${recordId}`, {
         method: 'DELETE',
       });
+      
+      if (!response.ok) throw new Error('Error al eliminar la hora extra');
+      
       const updatedRecords = records.filter((_, i) => i !== index);
       setRecords(updatedRecords);
     } catch (error) {
-      console.error('Error al eliminar la hora extra:', error);
+      console.error(error);
     }
   };
 
@@ -89,7 +108,7 @@ function HorasExtras() {
         {records.length > 0 ? (
           records.map((record, index) => (
             <div key={record._id} className="record-item">
-              <strong>{record.title}</strong> - {record.date} - {record.hours} horas
+              <strong>{record.title}</strong> - {new Date(record.date).toLocaleDateString()} - {record.hours} horas
               <div className="button-group">
                 <button onClick={() => handleEdit(index)}>Editar</button>
                 <button className="button-delete" onClick={() => handleDelete(index)}>Eliminar</button>
