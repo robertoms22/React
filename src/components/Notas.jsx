@@ -8,13 +8,23 @@ function Notas() {
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
 
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   // Cargar las notas desde el servidor cuando el componente se monta
   useEffect(() => {
-    fetch('http://localhost:5000/notas')
-      .then((response) => response.json())
-      .then((data) => setNotas(data))
-      .catch((error) => console.error('Error al obtener las notas:', error));
-  }, []);
+    const fetchNotas = async () => {
+      try {
+        const response = await fetch(`${apiUrl}/notas`);
+        if (!response.ok) throw new Error('Error al obtener las notas');
+        
+        const data = await response.json();
+        setNotas(data);
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    fetchNotas();
+  }, [apiUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,23 +33,29 @@ function Notas() {
     try {
       if (editIndex !== null) {
         // Editar nota
-        const updatedNota = await fetch(`http://localhost:5000/notas/${notas[editIndex]._id}`, {
+        const response = await fetch(`${apiUrl}/notas/${notas[editIndex]._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newNota),
         });
-        const updatedData = await updatedNota.json();
+        
+        if (!response.ok) throw new Error('Error al actualizar la nota');
+        
+        const updatedData = await response.json();
         const updatedNotas = [...notas];
         updatedNotas[editIndex] = updatedData;
         setNotas(updatedNotas);
         setEditIndex(null);
       } else {
         // Añadir nueva nota
-        const response = await fetch('http://localhost:5000/notas', {
+        const response = await fetch(`${apiUrl}/notas`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newNota),
         });
+        
+        if (!response.ok) throw new Error('Error al añadir la nota');
+        
         const data = await response.json();
         setNotas([...notas, data]); // Añadir nueva nota al estado
       }
@@ -49,7 +65,7 @@ function Notas() {
       setDescription('');
       setShowForm(false);
     } catch (error) {
-      console.error('Error al guardar la nota:', error);
+      console.error(error);
     }
   };
 
@@ -65,13 +81,16 @@ function Notas() {
   const handleDelete = async (index) => {
     const notaId = notas[index]._id;
     try {
-      await fetch(`http://localhost:5000/notas/${notaId}`, {
+      const response = await fetch(`${apiUrl}/notas/${notaId}`, {
         method: 'DELETE',
       });
+      
+      if (!response.ok) throw new Error('Error al eliminar la nota');
+      
       const updatedNotas = notas.filter((_, i) => i !== index);
       setNotas(updatedNotas);
     } catch (error) {
-      console.error('Error al eliminar la nota:', error);
+      console.error(error);
     }
   };
 
@@ -89,7 +108,7 @@ function Notas() {
         {notas.length > 0 ? (
           notas.map((nota, index) => (
             <div key={nota._id} className="nota-item">
-              <strong>{nota.title}</strong> - {nota.date}
+              <strong>{nota.title}</strong> - {new Date(nota.date).toLocaleDateString()}
               <p>{nota.description}</p>
               <div className="button-group">
                 <button onClick={() => handleEdit(index)}>Editar</button>
