@@ -1,46 +1,49 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 
 const Login = () => {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const navigate = useNavigate();  // Para redirigir al usuario
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const navigate = useNavigate()
 
   const handleLogin = async (e) => {
-    e.preventDefault();
+    e.preventDefault()
 
-    // Obtener la URL de la API desde la variable de entorno
-    const apiUrl = process.env.REACT_APP_API_URL;  // Usamos la variable de entorno
+    // Usar la URL completa de la API desde las variables de entorno
+    const apiUrl = import.meta.env.VITE_API_URL
+
+    console.log('API URL:', apiUrl)  // Verificar que la URL se imprime correctamente
 
     try {
-      // Verificar los datos antes de enviarlos
-      console.log('Enviando datos:', { email, password });
+      console.log('Enviando datos:', { email, password })
 
-      const response = await fetch(`${apiUrl}/login`, {  // Usamos apiUrl aquí
+      const response = await fetch(`${apiUrl}/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password }),
-      });
+        body: JSON.stringify({ email, password })
+      })
 
-      // Verificar la respuesta de la API
-      console.log('Respuesta de la API:', response);
+      console.log('Respuesta de la API:', response)
 
-      const data = await response.json();
-      // Verificar los datos devueltos por la API
-      console.log('Datos devueltos:', data);
-
-      if (response.ok) {
-        // Simular autenticación estableciendo un "token" en el localStorage
-        localStorage.setItem('token', '123456789');  // Simular un token en localStorage
-        alert('Login exitoso');
-        navigate('/dashboard');  // Redirige al dashboard
-      } else {
-        alert(data.message);  // Mostrar el mensaje de error del backend
+      if (!response.ok) {
+        const errorData = await response.json()
+        alert(errorData.message)  // Mostrar el mensaje de error del backend
+        return
       }
+
+      const data = await response.json()
+      console.log('Datos devueltos:', data)
+
+      // Simular autenticación estableciendo un "token" en el localStorage
+      localStorage.setItem('token', '123456789')
+      alert('Login exitoso')
+      navigate('/dashboard')  // Redirige al dashboard
+
     } catch (error) {
-      console.error('Error en el login:', error);  // Mostrar cualquier error
+      console.error('Error en el login:', error)
+      alert('Error en el login. Por favor, intente nuevamente.')
     }
-  };
+  }
 
   return (
     <div className="login-container">
@@ -71,7 +74,7 @@ const Login = () => {
         </form>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Login;
+export default Login
