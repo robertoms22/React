@@ -8,13 +8,15 @@ function Daily() {
   const [date, setDate] = useState('');
   const [description, setDescription] = useState('');
 
+  const apiUrl = import.meta.env.VITE_API_URL;
+
   // Cargar las notas desde el servidor cuando el componente se monta
   useEffect(() => {
-    fetch('http://localhost:5000/daily')
+    fetch(`${apiUrl}/daily`)
       .then((response) => response.json())
       .then((data) => setNotes(data))
       .catch((error) => console.error('Error al obtener las notas diarias:', error));
-  }, []);
+  }, [apiUrl]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -23,7 +25,7 @@ function Daily() {
     try {
       if (editIndex !== null) {
         // Editar nota
-        const updatedNote = await fetch(`http://localhost:5000/daily/${notes[editIndex]._id}`, {
+        const updatedNote = await fetch(`${apiUrl}/daily/${notes[editIndex]._id}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newNote),
@@ -35,7 +37,7 @@ function Daily() {
         setEditIndex(null);
       } else {
         // Añadir nueva nota
-        const response = await fetch('http://localhost:5000/daily', {
+        const response = await fetch(`${apiUrl}/daily`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(newNote),
@@ -65,7 +67,7 @@ function Daily() {
   const handleDelete = async (index) => {
     const noteId = notes[index]._id;
     try {
-      await fetch(`http://localhost:5000/daily/${noteId}`, {
+      await fetch(`${apiUrl}/daily/${noteId}`, {
         method: 'DELETE',
       });
       const updatedNotes = notes.filter((_, i) => i !== index);
@@ -140,4 +142,3 @@ function Daily() {
 }
 
 export default Daily;
-
